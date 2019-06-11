@@ -15,7 +15,7 @@ To understand more about the relationships between files, see this page describi
 
 This process consists of three steps:
 
-1. Transfer the read files to the ENA dropbox using FTP or Aspera.
+1. Transfer the read files to the ENA dropbox.
 1. Create XML files that describe the submission.
 1. Transfer XML files. With that, the files are submitted.
 
@@ -36,7 +36,7 @@ A read set submission consists of creating and transferring the following set of
 
 * Study (project): this is the file that will describe the study, and which will result in a ENA accession number for your reads.
 * Sample: a study consists of one or more samples. This file contains sample information. One file can contain information regarding one to many samples.
-* Experiment: each sample has been sequenced. This then constitutes an experiment, which is then described in this file One Experiment file can contain one to many experiments.
+* Experiment: each sample has been sequenced. This then constitutes an experiment, which is then described in this file. One Experiment file can contain one to many experiments.
 * Run: within each experiment, one or more sequencing runs have been done. In most cases, when there is only one pair of fastq files, there will be only one Run per Experiment. If there are more, more Runs  describing each run has to be created. One Run file can contain one to many Runs. This is the file that contains the filenames of the files transferred to the ENA dropbox above.
 * Submission: whenever a file (any of the ones mentioned above) is to be transferred to ENA, a file has to accompany it that tells the system on the other side what is to be done with it. This is the role of the submission file.  
 
@@ -45,16 +45,76 @@ When submitting files, ENA recommends to do a test against the test server first
 
 ### Creating the necessary files
 
-Some concepts/terms are shared between these files
-
-* Alias: this is a unique name for this particular file. This alias will be needed to be able to refer to this file from other files.
+In this section, the necessary files and their formats are described. Note, these files can contain significantly more information than described here - see the ENA webpages for more information. The minimum versions given here were generously contributed by [@martinghunt](https://github.com/martinghunt) and the [Iqbal lab](https://github.com/iqbal-lab-org).
 
 #### The study file
 
 This is the file that describes what the study in question was. There are some essential pieces of information that is needed to create this one:
 
-* Alias - see above.
-* Description - a text description of the study. 
+* Project alias - a specific tag for this study. Will be used by other entries.
+* Title - a name for the project/study.
+* Description - a text description of the project/study. This should contain information
+regarding how many samples are included and a bit about library prep and how they were sequenced.
+
+This is how the file looks:
+
+```
+<?xml version="1.0" ?>
+<PROJECT_SET>
+   <PROJECT alias="project_alias" center_name="center name">
+      <TITLE>title text</TITLE>
+      <DESCRIPTION>description text</DESCRIPTION>
+      <SUBMISSION_PROJECT>
+         <SEQUENCING_PROJECT/>
+      </SUBMISSION_PROJECT>
+   </PROJECT>
+</PROJECT_SET>
+```
+
+#### The sample file
+
+This file describes the samples in your read set. This file can contain many sample entries in one file. This is done by having multiple SAMPLE sections in the file. One SAMPLE section begins with the "<SAMPLE...>" tag, and ends with the "</SAMPLE...>" tag.
+
+Some values need to be detailed here (per sample):
+- Sample alias - a specific tag for this sample. Will be used by other entries.
+- Center name - the name of the institution sequencing/submitting the reads
+- Title - Name for the sample
+- Taxon id - NCBI taxonomic identifier for the sample
+
+```
+<?xml version="1.0" ?>
+<SAMPLE_SET>
+   <SAMPLE alias="sample alias" center_name="center name">
+      <TITLE>title</TITLE>
+      <SAMPLE_NAME>
+         <TAXON_ID>42</TAXON_ID>
+      </SAMPLE_NAME>
+   </SAMPLE>
+</SAMPLE_SET>
+```
+In this XML snippet, other information can also be added. Some things that should be considered is to add the isolation year (collection_date) and what it was isolated from (isolation_source). That would then look like this:
+
+```
+<?xml version="1.0" ?>
+<SAMPLE_SET>
+   <SAMPLE alias="sample alias" center_name="center name">
+      <TITLE>title</TITLE>
+      <SAMPLE_NAME>
+         <TAXON_ID>42</TAXON_ID>
+      </SAMPLE_NAME>
+      <SAMPLE_ATTRIBUTES>
+         <SAMPLE_ATTRIBUTE>
+            <TAG>collection_date</TAG>
+            <VALUE>2016</VALUE>
+            <TAG>isolation_source</TAG>
+            <VALUE>horse</VALUE>        
+         </SAMPLE_ATTRIBUTE>
+      </SAMPLE_ATTRIBUTES>
+   </SAMPLE>
+</SAMPLE_SET>
+```
+
+#### The experiment file
 
 
 #### The submit file
