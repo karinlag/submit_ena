@@ -25,11 +25,19 @@ To transfer read and XML files, the person submitting them must have [registered
 
 ## Fastq read file transfer
 
-Read files can be transferred to ENA using for instance FTP. Data is then put into a user specific area. Users should not expect the data to be there for more than two months. To figure out more about how to transfer, read the guide below.
+Read files can be transferred to ENA using for instance FTP. Data is then put into a user specific area. Users should not expect the data to be there for more than two months.
 
-* [Transfer fastq files to ENA](https://ena-docs.readthedocs.io/en/latest/fileprep/upload.html)
+Before transferring, make sure that the file is zipped and that a checksum file for each file has been made. A checksum file contains a "number" calculated on the basis of the file content. If the file changes, for instance by not being completely transferred, a checksum can reveal that. A checksum file is a file named fastq.gz.md5, i.e. the full sample filename followed by ".md5". To make a set of md5 checksum files for all files in a directory, do the following:
 
-The files transferred will be referred to in the read pair Run file, mentioned below.
+```bash
+for f in *.gz; do md5sum $f > $f.md5; done
+```
+
+* [On how to prep the files](https://ena-docs.readthedocs.io/en/latest/fileprep/preparation.html)
+
+* [On how to transfer fastq files to ENA](https://ena-docs.readthedocs.io/en/latest/fileprep/upload.html)
+
+The file names of the files transferred will be referred to in the read pair Run file, mentioned below.
 
 ## XML Files
 A read set submission consists of creating and transferring the following set of [XML](https://en.wikipedia.org/wiki/XML) files:
