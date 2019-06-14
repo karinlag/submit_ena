@@ -61,8 +61,7 @@ This is the file that describes what the study in question was. There are some e
 
 * Project alias - a specific tag for this study. Will be used by other entries.
 * Title - a name for the project/study.
-* Description - a text description of the project/study. This should contain information
-regarding how many samples are included and a bit about library prep and how they were sequenced.
+* Description - a text description of the project/study. This should contain information regarding how many samples are included and a bit about library prep and how they were sequenced.
 
 This is how the file looks:
 
@@ -81,9 +80,9 @@ This is how the file looks:
 
 #### The sample file
 
-This file describes the samples in your read set. This file can contain many sample entries in one file. This is done by having multiple SAMPLE sections in the file. One SAMPLE section begins with the "<SAMPLE...>" tag, and ends with the "</SAMPLE...>" tag.
+This file describes the sample(s) in your read set. This file can contain many sample entries in one file. This is done by having multiple SAMPLE sections in the file. One SAMPLE section begins with the "<SAMPLE...>" tag, and ends with the "</SAMPLE...>" tag.
 
-Some values need to be detailed here (per sample):
+Some values need to be specified here (per sample):
 - Sample alias - a specific tag for this sample. Will be used by other entries.
 - Center name - the name of the institution sequencing/submitting the reads
 - Title - Name for the sample
@@ -100,7 +99,7 @@ Some values need to be detailed here (per sample):
    </SAMPLE>
 </SAMPLE_SET>
 ```
-In this XML snippet, other information can also be added. Some things that should be considered is to add the isolation year (collection_date) and what it was isolated from (isolation_source). That would then look like this:
+In this XML snippet, other information can also be added as SAMPLE ATTRIBUTEs. Some things that should be considered is to add the isolation year (collection_date) and what it was isolated from (isolation_source). That could then look like this:
 
 ```
 <?xml version="1.0" ?>
@@ -121,8 +120,68 @@ In this XML snippet, other information can also be added. Some things that shoul
    </SAMPLE>
 </SAMPLE_SET>
 ```
+The tags are in this case taken from the [minuimum information required for samples checklist](https://www.ebi.ac.uk/ena/data/view/ERC000011).
 
 #### The experiment file
+
+An experiment is in this context a library that results in sequences coming from one or multiple lanes (or equivalent) on a sequencing machine. This file contains the necessary information regarding sequencing platform and library protocols. The information needed for this file is the following:
+
+- experiment alias - a name given specifically to this library
+- center name - same as above
+- title - a name for this library
+- study_acc - this is the accession number given to the study submisson above. If not submitted yet, alternatively change "accession" to "refname" and give the alias that was set in the study xml file above
+- sample_acc - this is the accession of the sample that this experiment belongs to. If the sample is not submitted yet, the same mechanism of referring to the sample alias by using "refname" instead of "accession" can be used.
+- library name - a name for your library
+- instrument - this value should refer to the sequencer that was used, [for a list, see this document](https://ena-docs.readthedocs.io/en/latest/reads/webin-cli.html#instrument).
+
+The values mentioned above have to be _replaced_ with values appropriate for the files in question. In addition, some values in the LIBRARY_DESCRIPTOR section have to be specified. These are prefilled in the example file. The documents mentioned below contain information regarding other values that are valid.
+
+* WGS as the Library Strategy means that this is a whole genome sequencing experiment, [for more, see this document](https://www.ebi.ac.uk/ena/submit/reads-library-strategy).
+* GENOMIC as the Library Source means that the DNA is genomic, [for more see this document](https://ena-docs.readthedocs.io/en/latest/reads/webin-cli.html#source).
+* RANDOM as the Library Selection describes how XXXXXX was done, [for more, see this document](https://ena-docs.readthedocs.io/en/latest/reads/webin-cli.html?highlight=random#selection).
+
+```
+<?xml version="1.0" ?>
+<EXPERIMENT_SET>
+   <EXPERIMENT alias="experiment alias" center_name="center name">
+      <TITLE>title</TITLE>
+      <STUDY_REF accession="study_acc"/>
+      <DESIGN>
+         <DESIGN_DESCRIPTION/>
+         <SAMPLE_DESCRIPTOR accession="sample_acc"/>
+         <LIBRARY_DESCRIPTOR>
+            <LIBRARY_NAME>library name</LIBRARY_NAME>
+            <LIBRARY_STRATEGY>WGS</LIBRARY_STRATEGY>
+            <LIBRARY_SOURCE>GENOMIC</LIBRARY_SOURCE>
+            <LIBRARY_SELECTION>RANDOM</LIBRARY_SELECTION>
+            <LIBRARY_LAYOUT>
+               <PAIRED/>
+            </LIBRARY_LAYOUT>
+         </LIBRARY_DESCRIPTOR>
+      </DESIGN>
+      <PLATFORM>
+         <platform>
+            <INSTRUMENT_MODEL>instrument</INSTRUMENT_MODEL>
+         </platform>
+      </PLATFORM>
+      <EXPERIMENT_ATTRIBUTES>
+         <EXPERIMENT_ATTRIBUTE>
+            <TAG>spam</TAG>
+            <VALUE>eggs</VALUE>
+         </EXPERIMENT_ATTRIBUTE>
+      </EXPERIMENT_ATTRIBUTES>
+   </EXPERIMENT>
+</EXPERIMENT_SET>
+
+```
+
+As shown above, experiment attributes can also be added, in the same way as described for SAMPLE ATTRIBUTEs above. These are however not mandatory.
+
+#### The run file
+
+After transferring Run file(s) to the webin area on ENA, the read files that they refer to will be moved from the private ENA webin area to the official archive, and the reads are officially submitted.
+
+
 
 
 #### The submit file
