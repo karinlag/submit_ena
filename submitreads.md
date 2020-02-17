@@ -9,7 +9,11 @@ Most of the information in this tutorial is found here:
 * [The ENA tutorial](https://ena-docs.readthedocs.io/en/latest/)
 
 To understand more about the relationships between files, see this page describing the data model:
- * [The ENA metadata model](https://ena-docs.readthedocs.io/en/latest/reads.html)
+ * [The ENA metadata model](https://ena-docs.readthedocs.io/en/latest/submit/general-guide/metadata.html)
+
+This tutorial suggests using the tools found in this github repository to help with the submission process. Note: this uses python2. If using this script, the "fix_files.py" script in this repository can be used to adjust the name of the files.
+
+* [The Public Health England's submission tools](https://github.com/phe-bioinformatics/ena_submission)
 
 ## Brief overview of the process
 
@@ -21,25 +25,34 @@ This process consists of three steps:
 
 The fastq files are transferred using FTP to a user specific location on the ENA server.  The XML are transferred using 'curl'. The XML files transferred describe the data being submitted. These files are interlinked by referring to each other in such a way that they, together with the read files, put together a read set submission.
 
-To transfer read and XML files, the person submitting them must have [registered an account at ENA with a username and password](https://ena-docs.readthedocs.io/en/latest/general-guide/registration.html).
+To transfer read and XML files, the person submitting them must have [registered an account at ENA with a username and password](https://ena-docs.readthedocs.io/en/latest/general-guide/registration.html). If the submitter does not have an account at ENA yet, one must be created.
 
 ## Fastq read file transfer
 
 Read files can be transferred to ENA using for instance FTP. Data is then put into a user specific area. Users should not expect the data to be there for more than two months.
 
-Before transferring, make sure that the file is zipped and that a checksum file for each file has been made. A checksum file contains a "number" calculated on the basis of the file content. If the file changes, for instance by not being completely transferred, a checksum can reveal that. A checksum file is a file named fastq.gz.md5, i.e. the full sample filename followed by ".md5". To make a set of md5 checksum files for all files in a directory, do the following:
+Before transferring, make sure that the file is zipped and that a checksum file for each file has been made. If using the PHE scripts, this file will be made for you.
+
+A checksum file contains a "number" calculated on the basis of the file content. If the file changes, for instance by not being completely transferred, a checksum can reveal that. A checksum file is a file named fastq.gz.md5, i.e. the full sample filename followed by ".md5". To make a set of md5 checksum files for all files in a directory, do the following:
+
 
 ```bash
 for f in *.gz; do md5sum $f > $f.md5; done
 ```
+These links contain more information on how to prepare your files.
 
 * [On how to prep the files](https://ena-docs.readthedocs.io/en/latest/fileprep/preparation.html)
+
+Once the files are prepared, they need to be transferred to ENA. Note: only the fastq files themselves need to be transferred, not the md5 files. For a recipe on how to do that, see the link below. If transferring from a linux system, see the instructions on how to upload using FTP.  
 
 * [On how to transfer fastq files to ENA](https://ena-docs.readthedocs.io/en/latest/fileprep/upload.html)
 
 The file names of the files transferred will be referred to in the read pair Run file, mentioned below.
 
 ## XML Files
+
+Once the read files themselves have been transferred, we can now proceed with making the necessary XML files.
+
 A read set submission consists of creating and transferring the following set of [XML](https://en.wikipedia.org/wiki/XML) files:
 
 * Study (project): this is the file that will describe the study, and which will result in a ENA accession number for your reads.
@@ -53,7 +66,13 @@ When submitting files, ENA recommends to do a test against the test server first
 
 ### Creating the necessary files
 
-In this section, the necessary files and their formats are described. Note, these files can contain significantly more information than described here - see the ENA webpages for more information. The minimum versions given here were generously contributed by [@martinghunt](https://github.com/martinghunt) and the [Iqbal lab](https://github.com/iqbal-lab-org).
+In this section, the necessary files and their formats are described. Note, these files can contain significantly more information than described here - see the ENA webpages for more information. The minimum versions given here were generously contributed by [@martinghunt](https://github.com/martinghunt) and the [Iqbal lab](https://github.com/iqbal-lab-org). They are also adjusted so as to resemble the output from the PHE scripts mentioned above.
+
+If using the PHE submission scripts, you will need to create the following files (see more on the PHE github pages):
+* A comma separated (csv) file containing all the information that you want to submit with your reads. The minimum is sample, taxon_id, scientific name and description. More information can be added here, see below.
+* An abstract file that describes your study.
+
+If using the PHE scripts, it is useful to gather these in the directory above the read set.
 
 #### The study file
 
@@ -78,13 +97,15 @@ This is how the file looks:
 </PROJECT_SET>
 ```
 
+To create the study file using the PHE scripts, you will need the abstract file mentioned above. The command asks for a REFNAME, which is the same as the project alias. Note, the PHE scripts produces a file containing STUDY instead of PROJECT, this is ok.
+
 #### The sample file
 
 This file describes the sample(s) in your read set. This file can contain many sample entries in one file. This is done by having multiple SAMPLE sections in the file. One SAMPLE section begins with the "<SAMPLE...>" tag, and ends with the "</SAMPLE...>" tag.
 
 Some values need to be specified here (per sample):
 - Sample alias - a specific tag for this sample. Will be used by other entries.
-- Center name - the name of the institution sequencing/submitting the reads
+- Center name - the name of the institution sequencing/submitting the reads (should be the same as above)
 - Title - Name for the sample
 - Taxon id - NCBI taxonomic identifier for the sample
 
@@ -122,6 +143,8 @@ In this XML snippet, other information can also be added as SAMPLE ATTRIBUTEs. S
 ```
 The tags are in this case taken from the [minuimum information required for samples checklist](https://www.ebi.ac.uk/ena/data/view/ERC000011).
 
+If using the PHE scripts, these values are all to be found in the sample information file. I suggest adding collection_date, isolation_source and geographic location. Note, before creating the sample XML file, the checksum file has to be made.
+
 #### The experiment file
 
 An experiment is in this context a library that results in sequences coming from one or multiple lanes (or equivalent) on a sequencing machine. This file contains the necessary information regarding sequencing platform and library protocols. The information needed for this file is the following:
@@ -133,12 +156,14 @@ An experiment is in this context a library that results in sequences coming from
 - sample_acc - this is the accession of the sample that this experiment belongs to. If the sample is not submitted yet, the same mechanism of referring to the sample alias by using "refname" instead of "accession" can be used.
 - library name - a name for your library
 - instrument - this value should refer to the sequencer that was used, [for a list, see this document](https://ena-docs.readthedocs.io/en/latest/reads/webin-cli.html#instrument).
+- read length - this value is the length of your reads.
 
 The values mentioned above have to be _replaced_ with values appropriate for the files in question. In addition, some values in the LIBRARY_DESCRIPTOR section have to be specified. These are prefilled in the example file. The documents mentioned below contain information regarding other values that are valid.
 
 * WGS as the Library Strategy means that this is a whole genome sequencing experiment, [for more, see this document](https://www.ebi.ac.uk/ena/submit/reads-library-strategy).
 * GENOMIC as the Library Source means that the DNA is genomic, [for more see this document](https://ena-docs.readthedocs.io/en/latest/reads/webin-cli.html#source).
 * RANDOM as the Library Selection describes how XXXXXX was done, [for more, see this document](https://ena-docs.readthedocs.io/en/latest/reads/webin-cli.html?highlight=random#selection).
+* NOMINAL_LENGTH as the read length.
 
 ```
 <?xml version="1.0" ?>
@@ -155,7 +180,7 @@ The values mentioned above have to be _replaced_ with values appropriate for the
             <LIBRARY_SOURCE>GENOMIC</LIBRARY_SOURCE>
             <LIBRARY_SELECTION>RANDOM</LIBRARY_SELECTION>
             <LIBRARY_LAYOUT>
-               <PAIRED/>
+               <PAIRED NOMINAL_LENGTH="200"/>
             </LIBRARY_LAYOUT>
          </LIBRARY_DESCRIPTOR>
       </DESIGN>
@@ -177,25 +202,69 @@ The values mentioned above have to be _replaced_ with values appropriate for the
 
 As shown above, experiment attributes can also be added, in the same way as described for SAMPLE ATTRIBUTEs above. These are however not mandatory.
 
+If using the PHE scripts, options such as read length etc can be set on the command line.
+
+
 #### The run file
 
-After transferring Run file(s) to the webin area on ENA, the read files that they refer to will be moved from the private ENA webin area to the official archive, and the reads are officially submitted.
+The run file is the one that actually describes the read files themselves. This is the file that will contain the filename and the checksum for each file. The fields that are needed here are:
+- run alias - a name given specifically to this run
+- experiment_ref - this is the accession number/alias given to the experiment which these read files are a result of
+- center name - the name of the institution submitting the reads
+- checksum - checksum for the file that is mentioned in the same FILE section
+- filename - name of the read file
+
+Note> the file name has to be exactly the same as it is in the ENA dropbox. I.e. no directory names.  
 
 
+```
+<?xml version='1.0' encoding='utf-8'?>
+<RUN_SET>
+  <RUN alias="run alias" center_name="center name">
+    <EXPERIMENT_REF refname="experiment alias" />
+    <DATA_BLOCK>
+      <FILES>
+        <FILE checksum="6e2e640ad49b063d54c145ecc33b34e3" checksum_method="MD5" filename="filename" />
+        <FILE checksum="d281ac18e3769baf03b2d2139376422f" checksum_method="MD5" filename="filename" />
+      </FILES>
+    </DATA_BLOCK>
+  </RUN>
+</RUN_SET>
+```
+
+If using the PHE scripts, the script will itself find the checksums and put them into the file with the filenames. Note: if running this on a directory with the read files in them, the directory name is in the filename. These will then have to be removed before submittal.
 
 
 #### The submit file
 
-All file
+Last but not least, the submit file. Whenever an XML file is transferred to ENA, we have to tell them what to do with them. In case we are adding a new submission, with the file set created above, this file will consist of a list of references to the files we have made above. This file and the others can then be transferred to ENA, and submission is complete. Note: first test this against the test server to ensure that everything is correct before transferring to the production server.
+
 
 ```
-<SUBMISSION>
+<?xml version='1.0' encoding='utf-8'?>
+<SUBMISSION_SET>
+  <SUBMISSION alias="study alias" center_name="center name">
     <ACTIONS>
-         <ACTION>
-              <RELEASE target="TODO: study accession number"/>
-         </ACTION>
+      <ACTION>
+        <ADD schema="study" source="study.xml" />
+      </ACTION>
+      <ACTION>
+        <ADD schema="sample" source="sample.xml" />
+      </ACTION>
+      <ACTION>
+        <ADD schema="experiment" source="experiment.xml" />
+      </ACTION>
+      <ACTION>
+        <ADD schema="run" source="run.xml" />
+      </ACTION>
+      <ACTION>
+        <HOLD />
+      </ACTION>
     </ACTIONS>
-</SUBMISSION>
+  </SUBMISSION>
+</SUBMISSION_SET>
 ```
 
-As is notable from the file above, there is a 'TODO' noted. Any such fields in this tutorial has to be filled with some information. The information above comes from the Study file that we will create next.
+This website explains how to submit the XML files.
+
+* [How to submit the XML files](https://ena-docs.readthedocs.io/en/latest/submit/analyses/programmatic.html#submit-the-xmls-using-curl)
